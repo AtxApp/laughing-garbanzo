@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Estantería Pendiente</title>
+<meta name="theme-color" content="#f3f4f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1220" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: inicio con cuatro estantes; cada categoría es su propia página con buscador y pestañas Pendientes / Terminados / Top */
+:root{
+  --bg:#f3f4f8; --surface:#ffffff; --ink:#151a2d; --muted:#5d6480; --line:#dfe2ec;
+  --accent:#2f4fd8; --accent-ink:#ffffff;
+  --peli:#d2453a; --serie:#7c4ddb; --docu:#1f8a62; --libro:#c27a12;
+  --on-c:#ffffff;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Inter",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0f1220; --surface:#181c2e; --ink:#e9ebf5; --muted:#9aa1bd; --line:#2a3048;
+  --accent:#7c93ff; --accent-ink:#0f1220;
+  --peli:#ff7a6e; --serie:#b294ff; --docu:#4fd1a0; --libro:#f2b14a; --on-c:#0f1220; color-scheme:dark}}
+*{box-sizing:border-box}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5}
+img{max-width:100%}
+[hidden]{display:none!important}
+.wrap{max-width:720px;margin:0 auto;padding-block:20px 48px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:20px}
+[data-tipo="pelicula"]{--c:var(--peli)} [data-tipo="serie"]{--c:var(--serie)} [data-tipo="documental"]{--c:var(--docu)} [data-tipo="libro"]{--c:var(--libro)}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(28px,7vw,40px);line-height:1.05;margin:0;letter-spacing:-.02em;text-wrap:balance}
+.lead{margin:6px 0 0;color:var(--muted);max-width:60ch}
+button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a{color:inherit;text-decoration:none}
+.note{font-size:13px;color:var(--muted);margin:0}
+.err{color:var(--peli)}
+.toprow{display:flex;justify-content:space-between;align-items:center;gap:10px}
+
+/* inicio */
+.shelves{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.shelf{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;min-height:150px}
+.shelf::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--c)}
+.shelf:hover{border-color:var(--c)}
+.shelf h2{font-family:var(--display);font-size:22px;margin:0;font-weight:700}
+.shelf .nums{display:flex;gap:14px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.shelf .nums b{display:block;font-size:22px;color:var(--ink);font-weight:700;line-height:1.1}
+.shelf .top1{font-size:13px;color:var(--muted);margin-top:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.shelf .top1 strong{color:var(--ink);font-weight:600}
+@media (max-width:420px){.shelf{padding:14px}.shelf h2{font-size:19px}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.panel h2{font-family:var(--display);font-size:18px;margin:0}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row input{flex:1;min-width:0;font:inherit;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink)}
+
+/* página de categoría */
+.back{display:inline-flex;gap:6px;align-items:center;font-size:14px;color:var(--muted);font-weight:500;padding:4px 0}
+.back:hover{color:var(--ink)}
+.cathead{display:flex;flex-direction:column;gap:4px;border-left:6px solid var(--c);padding-left:14px}
+.cathead .counts{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.cathead .counts b{color:var(--ink)}
+.search{display:flex;gap:8px}
+.search input{flex:1;min-width:0;font:inherit;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink)}
+.search input:focus-visible{outline:none;border-color:var(--c)}
+.btn{padding:11px 16px;border-radius:12px;background:var(--c,var(--accent));color:var(--on-c,var(--accent-ink));font-weight:600;white-space:nowrap}
+.btn:disabled{opacity:.5;cursor:default}
+.ghost{padding:8px 12px;border-radius:10px;border:1.5px solid var(--line);font-size:13px;font-weight:500;background:var(--surface)}
+.ghost:hover{border-color:var(--muted)}
+
+.results{display:flex;flex-direction:column;gap:8px}
+.result{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px}
+.add{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--c);color:var(--c);font-size:22px;line-height:1;display:grid;place-items:center}
+.add[aria-pressed="true"]{background:var(--c);color:var(--on-c)}
+.manual{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+
+/* portada o lomo */
+.cover{width:38px;height:56px;border-radius:4px;object-fit:cover;background:var(--c);display:block;flex:none}
+.spine{width:38px;height:56px;border-radius:4px 6px 6px 4px;background:var(--c);box-shadow:inset 3px 0 0 rgba(0,0,0,.18);opacity:.9}
+
+.tabs{display:flex;gap:4px;border-bottom:1.5px solid var(--line);overflow-x:auto}
+.tab{padding:10px 14px;font-weight:600;color:var(--muted);border-bottom:2.5px solid transparent;margin-bottom:-1.5px;white-space:nowrap}
+.tab[aria-selected="true"]{color:var(--ink);border-color:var(--c)}
+.tab span{font-family:var(--mono);font-size:11px;font-weight:500;margin-left:4px;color:var(--muted)}
+
+.list{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.item{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.item:first-child{border-top:none}
+.item .meta{min-width:0}
+.rank{width:30px;text-align:right;font-family:var(--mono);font-weight:700;font-size:18px;color:var(--muted);font-variant-numeric:tabular-nums}
+.item.podium .rank{color:var(--c)}
+.rankcell{display:flex;gap:10px;align-items:center}
+.actions{display:flex;gap:4px;align-items:center}
+.icon{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--muted)}
+.icon:hover{background:var(--bg);color:var(--ink)}
+.icon svg{width:20px;height:20px}
+.done-btn{border:1.5px solid var(--line);color:var(--ink)}
+.score{display:inline-flex;align-items:baseline;gap:2px;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.score input{width:3.4em;font:inherit;font-weight:700;font-size:16px;text-align:right;padding:6px 6px;border:1.5px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);-moz-appearance:textfield}
+.score input::-webkit-outer-spin-button,.score input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.score input:focus-visible{outline:none;border-color:var(--c)}
+.score input.empty{border-style:dashed}
+.score small{font-size:11px;color:var(--muted)}
+.bigscore{font-family:var(--mono);font-weight:700;font-size:20px;font-variant-numeric:tabular-nums;text-align:right}
+.bigscore small{font-size:11px;color:var(--muted);font-weight:500}
+.bar{height:4px;border-radius:2px;background:var(--line);margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--c)}
+.confirm{display:flex;gap:6px;align-items:center;font-size:13px}
+.confirm .yes{color:var(--peli);font-weight:600;padding:6px 8px}
+
+.empty{padding:28px 18px;text-align:center;display:flex;flex-direction:column;gap:12px;align-items:center}
+.empty h2{font-family:var(--display);font-size:20px;margin:0}
+.empty p{margin:0;color:var(--muted);max-width:44ch}
+.trychips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+
+/* filas tocables */
+.open{display:block;text-align:left;min-width:0;width:100%;padding:0;border-radius:8px}
+.open .t{display:block;margin:0;font-size:15px;font-weight:600;overflow-wrap:anywhere}
+.open .s{display:block;font-size:12.5px;color:var(--muted);margin-top:1px}
+.open .p{display:block;font-size:12px;color:var(--c);font-weight:500;margin-top:2px}
+.result .open .s{font-size:13px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.open:hover .t{text-decoration:underline;text-decoration-color:var(--c);text-underline-offset:3px}
+
+/* ficha */
+.scrim{position:fixed;inset:0;background:rgba(10,12,24,.45);z-index:20}
+.sheet{position:fixed;z-index:21;left:50%;transform:translateX(-50%);bottom:0;width:min(640px,100%);max-height:88vh;overflow-y:auto;
+  background:var(--surface);border-radius:20px 20px 0 0;border-top:6px solid var(--c);
+  padding:18px max(18px,env(safe-area-inset-left,0px)) calc(24px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-right,0px));
+  display:flex;flex-direction:column;gap:14px;box-shadow:0 -10px 40px rgba(0,0,0,.25)}
+@media (min-width:700px){.sheet{bottom:auto;top:50%;transform:translate(-50%,-50%);border-radius:20px}}
+.sheet-head{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:start}
+.sheet-head .poster{width:84px;height:124px;border-radius:6px;object-fit:cover;background:var(--c)}
+.sheet .kind{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--c)}
+.sheet h2{font-family:var(--display);font-size:24px;line-height:1.1;margin:2px 0 4px;text-wrap:balance}
+.sheet .sub{font-size:13.5px;color:var(--muted)}
+.sheet .syn{margin:0;line-height:1.6;max-width:62ch}
+.tags{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:12px;padding:3px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line)}
+.tag.strong{border-color:var(--c);color:var(--c);font-weight:600}
+.sect{border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:10px}
+.sect h3{margin:0;font-size:12px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:500}
+.dates{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.field{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);min-width:0}
+.field input{font:inherit;font-size:14px;color:var(--ink);padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;background:var(--bg);min-width:0;width:100%}
+.field input:focus-visible{outline:none;border-color:var(--c)}
+.season{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end}
+.season .sn{font-family:var(--mono);font-weight:700;font-size:15px;padding-bottom:9px;min-width:2.4em}
+.season .icon{width:34px;height:38px}
+@media (max-width:420px){.season{gap:6px}.season .field input{font-size:13px;padding:8px 6px}.sheet-head .poster{width:64px;height:94px}}
+.statusrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pill{font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--c);color:var(--on-c)}
+.pill.soft{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+.attrib{font-size:11.5px;color:var(--muted);text-align:center;margin-top:8px}
+.attrib a{text-decoration:underline}
+@media (prefers-reduced-motion:no-preference){.item,.result,.shelf{animation:in .2s ease-out}.sheet{animation:up .22s ease-out}}
+@keyframes in{from{transform:translateY(4px)}to{transform:none}}
+@keyframes up{from{opacity:.6}to{opacity:1}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+/* ======================= configuración ======================= */
+const CATS = {
+  peliculas:{tipo:"pelicula", titulo:"Películas", uno:"película", hecho:"Vistas", marcar:"Marcar como vista", ph:"Busca una película…", prueba:["Colisión","Cumbres borrascosas","El 47","Perfect Days"]},
+  series:{tipo:"serie", titulo:"Series", uno:"serie", hecho:"Vistas", marcar:"Marcar como vista", ph:"Busca una serie…", prueba:["La edad dorada","The Bear","Shogun","Querer"]},
+  documentales:{tipo:"documental", titulo:"Documentales", uno:"documental", hecho:"Vistos", marcar:"Marcar como visto", ph:"Busca un documental…", prueba:["Mi maestro el pulpo","Free Solo","Nevenka","Making a Murderer"]},
+  libros:{tipo:"libro", titulo:"Libros", uno:"libro", hecho:"Leídos", marcar:"Marcar como leído", ph:"Busca un libro o un autor…", prueba:["El infinito en un junco","Patria","Cien años de soledad","Lecciones de química"]}
+};
+const BY_TIPO = Object.fromEntries(Object.entries(CATS).map(([k,v])=>[v.tipo,k]));
+const DOC_GENRE = 99;
+const IMG = "https://image.tmdb.org/t/p/";
+const ICON_CHECK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+const ICON_UNDO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>';
+const ICON_DEL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").trim();
+const puntos = i => (typeof i.puntos==="number" && i.puntos>0) ? i.puntos : null;
+const MESES=["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+function fdate(v,conAnio){ if(!v) return ""; const [y,m,d]=v.split("-").map(Number); return `${d} ${MESES[m-1]}`+(conAnio?` ${y}`:""); }
+function hoy(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+
+/* ======================= estado y guardado ======================= */
+const KEY="estanteria-items", TMDB_KEY="estanteria-tmdb";
+let items=[];
+try{ items=JSON.parse(localStorage.getItem(KEY)||"[]"); }catch(e){ items=[]; }
+let tmdbKey=""; try{ tmdbKey=localStorage.getItem(TMDB_KEY)||""; }catch(e){}
+let route="inicio", tab="pendiente", search={q:"",results:null,busy:false,err:""};
+let confirmDel=null, sheet=null, status="";
+const detCache={}, detState={};
+
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(items)); }catch(e){ status="No se pudo guardar en este navegador."; } render(); }
+const store={
+  add(it){ items.push(it); save(); },
+  update(id,patch){ const i=items.find(x=>x.id===id); if(i) Object.assign(i,patch); save(); },
+  remove(id){ items=items.filter(x=>x.id!==id); save(); }
+};
+
+/* ======================= fuentes de datos ======================= */
+async function tmdb(path,params={}){
+  if(!tmdbKey) throw {code:"nokey"};
+  const u=new URL("https://api.themoviedb.org/3"+path);
+  const bearer=tmdbKey.startsWith("eyJ");
+  if(!bearer) u.searchParams.set("api_key",tmdbKey);
+  u.searchParams.set("language","es-ES");
+  for(const [k,v] of Object.entries(params)) u.searchParams.set(k,v);
+  const r=await fetch(u,{headers:bearer?{Authorization:"Bearer "+tmdbKey}:{}});
+  if(r.status===401) throw {code:"badkey"};
+  if(!r.ok) throw {code:"http"};
+  return r.json();
+}
+const yearOf = s => s ? Number(String(s).slice(0,4))||null : null;
+function fromTmdb(x,media){
+  return {titulo:x.title||x.name, anio:yearOf(x.release_date||x.first_air_date), autor:"",
+    sinopsis:x.overview||"", poster:x.poster_path?IMG+"w185"+x.poster_path:"", ref:{src:"tmdb",media,id:x.id}};
+}
+async function buscarFuente(q,tipo){
+  if(tipo==="libro"){
+    const u=new URL("https://openlibrary.org/search.json");
+    u.searchParams.set("q",q); u.searchParams.set("limit","8");
+    u.searchParams.set("fields","key,title,author_name,first_publish_year,cover_i,number_of_pages_median,subject");
+    const r=await fetch(u); if(!r.ok) throw {code:"http"};
+    const j=await r.json();
+    return (j.docs||[]).map(d=>({titulo:d.title, anio:d.first_publish_year||null, autor:(d.author_name||[])[0]||"",
+      sinopsis:"", poster:d.cover_i?`https://covers.openlibrary.org/b/id/${d.cover_i}-M.jpg`:"",
+      paginas:d.number_of_pages_median||null, temas:(d.subject||[]).slice(0,3), ref:{src:"ol",key:d.key}}));
+  }
+  if(tipo==="pelicula"){
+    const j=await tmdb("/search/movie",{query:q,region:"ES"});
+    return j.results.filter(x=>!(x.genre_ids||[]).includes(DOC_GENRE)).slice(0,8).map(x=>fromTmdb(x,"movie"));
+  }
+  if(tipo==="serie"){
+    const j=await tmdb("/search/tv",{query:q});
+    return j.results.filter(x=>!(x.genre_ids||[]).includes(DOC_GENRE)).slice(0,8).map(x=>fromTmdb(x,"tv"));
+  }
+  // documentales: películas y series con el género Documental
+  const [m,t]=await Promise.all([tmdb("/search/movie",{query:q}),tmdb("/search/tv",{query:q})]);
+  const all=[...m.results.map(x=>[x,"movie"]),...t.results.map(x=>[x,"tv"])]
+    .filter(([x])=>(x.genre_ids||[]).includes(DOC_GENRE))
+    .sort((a,b)=>(b[0].popularity||0)-(a[0].popularity||0));
+  return all.slice(0,8).map(([x,media])=>fromTmdb(x,media));
+}
+async function detalleFuente(d){
+  const ref=d.ref; if(!ref) return null;
+  if(ref.src==="ol"){
+    const r=await fetch("https://openlibrary.org"+ref.key+".json"); if(!r.ok) throw {code:"http"};
+    const w=await r.json();
+    const desc=typeof w.description==="string"?w.description:(w.description&&w.description.value)||"";
+    return {sinopsis:desc.split(/\n-{3,}|\(\[source\]/)[0].trim().slice(0,1200),
+      generos:(d.temas&&d.temas.length?d.temas:(w.subjects||[]).slice(0,3)),
+      extra:d.paginas?`${d.paginas} páginas`:"", reparto:[], temporadas:null, donde:"", autor:""};
+  }
+  const j=await tmdb(`/${ref.media}/${ref.id}`,{append_to_response:"credits,watch/providers"});
+  let extra="", autor="", temporadas=null;
+  if(ref.media==="movie"){
+    if(j.runtime) extra=`${Math.floor(j.runtime/60)} h ${j.runtime%60} min`;
+    const dir=(j.credits&&j.credits.crew||[]).find(c=>c.job==="Director"); if(dir) autor=dir.name;
+  } else {
+    temporadas=j.number_of_seasons||null;
+    if(j.number_of_seasons) extra=`${j.number_of_seasons} temporada${j.number_of_seasons>1?"s":""}`+(j.number_of_episodes?` · ${j.number_of_episodes} episodios`:"");
+    autor=(j.created_by||[]).map(c=>c.name).slice(0,2).join(", ");
+  }
+  const es=j["watch/providers"]&&j["watch/providers"].results&&j["watch/providers"].results.ES;
+  const prov=es?[...(es.flatrate||[]),...(es.free||[]),...(es.ads||[])].map(p=>p.provider_name):[];
+  return {sinopsis:j.overview||"", generos:(j.genres||[]).map(g=>g.name).filter(g=>g!=="Documental").slice(0,3),
+    extra, reparto:(j.credits&&j.credits.cast||[]).slice(0,4).map(c=>c.name), temporadas,
+    donde:[...new Set(prov)].slice(0,4).join(", "), autor};
+}
+
+/* ======================= rutas ======================= */
+function readRoute(){
+  const h=location.hash.replace("#","");
+  const next=CATS[h]?h:(h==="ajustes"?"ajustes":"inicio");
+  if(next!==route){ route=next; tab="pendiente"; search={q:"",results:null,busy:false,err:""}; confirmDel=null; sheet=null; }
+  render(); window.scrollTo(0,0);
+}
+window.addEventListener("hashchange",readRoute);
+
+/* ======================= acciones ======================= */
+async function buscar(q){
+  q=q.trim(); if(!q) return;
+  const cat=CATS[route];
+  search={q,results:null,busy:true,err:""}; render();
+  try{ search.results=await buscarFuente(q,cat.tipo); }
+  catch(e){
+    search.results=[];
+    search.err = e.code==="nokey" ? "Para buscar películas, series y documentales necesitas tu clave de TMDB. Añádela en Ajustes."
+               : e.code==="badkey" ? "La clave de TMDB no es válida. Revísala en Ajustes."
+               : "La búsqueda ha fallado. Comprueba la conexión y vuelve a intentarlo.";
+  }
+  search.busy=false; render();
+}
+const enLista=(titulo,tipo)=>items.find(i=>norm(i.titulo)===norm(titulo)&&i.tipo===tipo);
+const dkey=(d,tipo)=>d.ref?JSON.stringify(d.ref):tipo+"|"+norm(d.titulo);
+function addItem(r,tipo){
+  const ya=enLista(r.titulo,tipo); if(ya) return ya.id;
+  const id="i"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const it={id,titulo:String(r.titulo).slice(0,200),tipo,anio:r.anio||null,autor:r.autor||"",sinopsis:(r.sinopsis||"").slice(0,400),
+    poster:r.poster||"",ref:r.ref||null,paginas:r.paginas||null,temas:r.temas||[],
+    estado:"pendiente",puntos:null,creado:Date.now(),terminado:null,inicio:null,fin:null,temporadas:[]};
+  const det=detCache[dkey(it,tipo)]; if(det){ it.detalle=det; if(!it.autor&&det.autor) it.autor=det.autor; }
+  store.add(it); return id;
+}
+async function cargarDetalle(d,tipo,itemId){
+  const k=dkey(d,tipo);
+  if(detCache[k]||detState[k]==="busy"||!d.ref) return;
+  detState[k]="busy"; render();
+  try{
+    const det=await detalleFuente(d);
+    if(det){ detCache[k]=det; detState[k]="ok";
+      if(itemId){ const patch={detalle:det}; const it=items.find(x=>x.id===itemId); if(it&&!it.autor&&det.autor) patch.autor=det.autor; store.update(itemId,patch); }
+    } else detState[k]="none";
+  }catch(e){ detState[k]=e.code==="nokey"||e.code==="badkey"?"key":"fail"; }
+  render();
+}
+function abrir(s){
+  sheet=s; confirmDel=null; render();
+  if(s.kind==="item"){ const it=items.find(x=>x.id===s.id); if(!it) return; if(it.detalle){ detCache[dkey(it,it.tipo)]=it.detalle; return; } cargarDetalle(it,it.tipo,it.id); }
+  else cargarDetalle(s.data,CATS[route].tipo,null);
+}
+function cerrar(){ sheet=null; render(); }
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"&&sheet) cerrar(); });
+function setTemporadas(id,fn){ const it=items.find(x=>x.id===id); if(!it) return; store.update(id,{temporadas:fn((it.temporadas||[]).map(s=>({...s})))}); }
+
+function exportar(){
+  const blob=new Blob([JSON.stringify({version:1,exportado:new Date().toISOString(),items},null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=`estanteria-${hoy()}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+function importar(file){
+  const fr=new FileReader();
+  fr.onload=()=>{
+    try{
+      const j=JSON.parse(fr.result); const arr=Array.isArray(j)?j:j.items;
+      if(!Array.isArray(arr)) throw 0;
+      let n=0;
+      for(const it of arr){ if(!it||!it.titulo||!it.tipo||!CATS[BY_TIPO[it.tipo]]) continue;
+        const ya=items.find(x=>x.id===it.id)||enLista(it.titulo,it.tipo);
+        if(ya) Object.assign(ya,it,{id:ya.id}); else { items.push({...it,id:it.id||("i"+Math.random().toString(36).slice(2,10))}); n++; } }
+      status=`Importado: ${n} nuevo${n!==1?"s":""}, el resto actualizado.`; save();
+    }catch(e){ status="Ese archivo no es una copia válida de la estantería."; render(); }
+  };
+  fr.readAsText(file);
+}
+
+/* ======================= vistas ======================= */
+function progreso(i){
+  if(i.tipo==="libro"){
+    if(i.inicio&&i.fin) return `Leído del ${fdate(i.inicio)} al ${fdate(i.fin,true)}`;
+    if(i.inicio) return `Leyendo desde el ${fdate(i.inicio)}`;
+    if(i.fin) return `Terminado el ${fdate(i.fin,true)}`;
+  }
+  if(i.tipo==="serie"&&Array.isArray(i.temporadas)&&i.temporadas.length){
+    const ts=[...i.temporadas].sort((a,b)=>a.n-b.n), last=ts[ts.length-1], hechas=ts.filter(t=>t.fin).length;
+    if(last.inicio&&!last.fin) return `Viendo la temporada ${last.n}`+(hechas?` · ${hechas} terminada${hechas>1?"s":""}`:"");
+    return `${hechas} temporada${hechas!==1?"s":""} terminada${hechas!==1?"s":""}`+(last.fin?` · última el ${fdate(last.fin,true)}`:"");
+  }
+  return "";
+}
+const sub=i=>[i.anio,i.autor].filter(Boolean).map(esc).join(" · ");
+const portada=i=>i.poster?`<img class="cover" src="${esc(i.poster)}" alt="" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('div'),{className:'spine'}))">`:`<div class="spine" aria-hidden="true"></div>`;
+function metaBtn(i){ const p=progreso(i);
+  return `<button class="open" data-open-item="${i.id}" aria-label="Ver ficha de ${esc(i.titulo)}"><span class="t">${esc(i.titulo)}</span><span class="s">${sub(i)}</span>${p?`<span class="p">${esc(p)}</span>`:""}</button>`; }
+
+function render(){
+  const app=$("#app"); const activeId=document.activeElement&&document.activeElement.id;
+  app.innerHTML = route==="inicio"?renderInicio():route==="ajustes"?renderAjustes():renderCat()+renderSheet();
+  document.body.style.overflow=sheet?"hidden":"";
+  bind();
+  if(activeId){ const el=document.getElementById(activeId); if(el&&el!==document.activeElement) el.focus(); }
+}
+function stats(tipo){
+  const of=items.filter(i=>i.tipo===tipo), done=of.filter(i=>i.estado==="hecho");
+  return {pend:of.length-done.length, done:done.length, top:done.filter(puntos).sort((a,b)=>puntos(b)-puntos(a))[0]};
+}
+function renderInicio(){
+  return `<div class="toprow"><h1>Estantería pendiente</h1><a class="ghost" href="#ajustes">Ajustes</a></div>
+    <p class="lead" style="margin-top:-12px">Lo que quieres ver y leer, separado por estantes. Entra en cada uno para buscar, marcar lo terminado y puntuarlo de 1 a 100.</p>
+    ${!tmdbKey?`<div class="panel"><h2>Falta un paso</h2><p class="note">Para buscar películas, series y documentales, añade tu clave gratuita de TMDB en <a href="#ajustes" style="text-decoration:underline">Ajustes</a>. Los libros funcionan ya.</p></div>`:""}
+  <nav class="shelves" aria-label="Categorías">`+
+  Object.entries(CATS).map(([k,c])=>{ const s=stats(c.tipo);
+    return `<a class="shelf" href="#${k}" data-tipo="${c.tipo}"><h2>${c.titulo}</h2>
+      <div class="nums"><span><b>${s.pend}</b>pendientes</span><span><b>${s.done}</b>${c.hecho.toLowerCase()}</span></div>
+      <div class="top1">${s.top?`Nº 1: <strong>${esc(s.top.titulo)}</strong> · ${puntos(s.top)}`:"Aún sin ranking"}</div></a>`;}).join("")+`</nav>`+
+  (status?`<p class="note">${esc(status)}</p>`:"")+attrib();
+}
+function attrib(){ return `<p class="attrib">Datos de películas y series: <a href="https://www.themoviedb.org" target="_blank" rel="noopener">TMDB</a>. Libros: <a href="https://openlibrary.org" target="_blank" rel="noopener">Open Library</a>. Esta app usa la API de TMDB pero no está avalada ni certificada por TMDB.</p>`; }
+function renderAjustes(){
+  return `<a class="back" href="#inicio">← Estantería</a><h1>Ajustes</h1>
+  <section class="panel"><h2>Clave de TMDB</h2>
+    <p class="note">Créate una cuenta gratis en themoviedb.org, ve a Ajustes → API y copia la “Clave de la API” o el “Token de acceso de lectura”. Se guarda solo en este navegador.</p>
+    <form class="row" id="keyForm"><input id="keyInput" type="password" autocomplete="off" placeholder="Pega aquí tu clave" value="${esc(tmdbKey)}" aria-label="Clave de TMDB">
+      <button class="btn" type="submit" style="--c:var(--accent);--on-c:var(--accent-ink)">Guardar</button></form>
+    <p class="note" id="keyMsg">${tmdbKey?"Clave guardada.":""}</p></section>
+  <section class="panel"><h2>Copia de seguridad</h2>
+    <p class="note">Tu lista vive en este navegador. Descarga una copia para no perderla o para pasarla a otro dispositivo, e impórtala allí.</p>
+    <div class="row"><button class="ghost" id="exp">Descargar copia</button>
+      <label class="ghost" style="cursor:pointer">Importar copia<input type="file" id="imp" accept="application/json,.json" hidden></label></div>
+    <p class="note">${items.length} título${items.length!==1?"s":""} guardado${items.length!==1?"s":""}.</p>
+    ${status?`<p class="note">${esc(status)}</p>`:""}</section>`+attrib();
+}
+function renderCat(){
+  const cat=CATS[route], t=cat.tipo, of=items.filter(i=>i.tipo===t);
+  const pend=of.filter(i=>i.estado!=="hecho").sort((a,b)=>(b.creado||0)-(a.creado||0));
+  const done=of.filter(i=>i.estado==="hecho").sort((a,b)=>(b.terminado||0)-(a.terminado||0));
+  const top=done.filter(puntos).sort((a,b)=>puntos(b)-puntos(a)||(a.titulo||"").localeCompare(b.titulo||""));
+  const sinNota=done.length-top.length;
+  let h=`<a class="back" href="#inicio">← Estantería</a>
+  <header class="cathead" data-tipo="${t}"><h1>${cat.titulo}</h1>
+    <div class="counts"><span><b>${pend.length}</b> pendientes</span><span><b>${done.length}</b> ${cat.hecho.toLowerCase()}</span>${top.length?`<span>media <b>${Math.round(top.reduce((s,i)=>s+puntos(i),0)/top.length)}</b>/100</span>`:""}</div></header>
+  <section data-tipo="${t}" aria-label="Buscar">
+    <form class="search" id="searchForm" autocomplete="off">
+      <input id="q" type="search" placeholder="${esc(cat.ph)}" aria-label="Buscar ${cat.uno}" value="${esc(search.q)}">
+      <button class="btn" type="submit" ${search.busy?"disabled":""}>Buscar</button></form>
+    <div style="margin-top:10px">${renderResults(cat)}</div></section>
+  <section data-tipo="${t}" style="display:flex;flex-direction:column;gap:12px" aria-label="Tu lista">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="pendiente" aria-selected="${tab==="pendiente"}">Pendientes<span>${pend.length}</span></button>
+      <button class="tab" role="tab" data-tab="hecho" aria-selected="${tab==="hecho"}">${cat.hecho}<span>${done.length}</span></button>
+      <button class="tab" role="tab" data-tab="top" aria-selected="${tab==="top"}">Top<span>${top.length}</span></button></div>`;
+  if(tab==="pendiente") h+= pend.length?`<div class="list">${pend.map(i=>rowPend(i,cat)).join("")}</div>`:emptyPend(cat,of.length===0);
+  else if(tab==="hecho") h+= done.length?`<div class="list">${done.map(i=>rowDone(i)).join("")}</div>`
+      :`<div class="list"><div class="empty"><h2>Nada ${cat.hecho.toLowerCase()} todavía</h2><p>Cuando termines un pendiente, márcalo con ✓ y ponle tu nota de 1 a 100.</p></div></div>`;
+  else h+= top.length?`<div class="list">${top.map((i,n)=>rowTop(i,n+1)).join("")}</div>`+(sinNota?`<p class="note">${sinNota} sin nota no ${sinNota===1?"aparece":"aparecen"} en el ranking. Puntúa en “${cat.hecho}”.</p>`:"")
+      :`<div class="list"><div class="empty"><h2>Tu ranking está vacío</h2><p>Puntúa de 1 a 100 lo que hayas terminado y aquí se ordenará de mejor a peor.</p></div></div>`;
+  return h+`</section>`+(status?`<p class="note">${esc(status)}</p>`:"");
+}
+function renderResults(cat){
+  if(search.busy) return `<p class="note">Buscando “${esc(search.q)}”…</p>`;
+  if(search.results===null) return "";
+  let h=search.err?`<p class="note err">${esc(search.err)}</p>`:"";
+  if(search.results.length){
+    h+=`<div class="results">`+search.results.map((r,i)=>{ const ya=enLista(r.titulo,cat.tipo);
+      return `<div class="result">${portada(r)}<button class="open" data-open-result="${i}" aria-label="Ver ficha de ${esc(r.titulo)}"><span class="t">${esc(r.titulo)}</span>
+        <span class="s">${[r.anio,r.autor].filter(Boolean).map(esc).join(" · ")}${r.sinopsis?" — "+esc(r.sinopsis):""}</span></button>
+        <button class="add" data-add="${i}" aria-pressed="${!!ya}" aria-label="${ya?"Ya está en tu lista":"Añadir a pendientes"}" ${ya?"disabled":""}>${ya?"✓":"+"}</button></div>`;}).join("")+`</div>`;
+  } else if(!search.err) h+=`<p class="note">No he encontrado ${cat.titulo.toLowerCase()} con “${esc(search.q)}”.</p>`;
+  return h+`<div class="manual"><span class="note">¿No sale?</span><button class="ghost" id="manualAdd">Añadir “${esc(search.q)}” tal cual</button><button class="ghost" id="closeRes">Cerrar</button></div>`;
+}
+function emptyPend(cat,vacio){
+  return `<div class="list"><div class="empty"><h2>Sin ${cat.titulo.toLowerCase()} pendientes</h2>
+    <p>Busca arriba y pulsa + para guardarlo.${vacio?" Prueba con alguno de estos:":""}</p>
+    ${vacio?`<div class="trychips">${cat.prueba.map(t=>`<button class="ghost" data-try="${esc(t)}">${esc(t)}</button>`).join("")}</div>`:""}</div></div>`;
+}
+function delOrActions(i,inner){
+  return confirmDel===i.id
+    ?`<div class="confirm"><span>¿Quitar?</span><button class="yes" data-del-yes="${i.id}">Quitar</button><button class="ghost" data-del-no>No</button></div>`
+    :`<div class="actions">${inner}<button class="icon" data-del="${i.id}" aria-label="Quitar de la lista" title="Quitar">${ICON_DEL}</button></div>`;
+}
+function rowPend(i,cat){ return `<div class="item">${portada(i)}${metaBtn(i)}${delOrActions(i,`<button class="icon done-btn" data-done="${i.id}" aria-label="${cat.marcar}" title="${cat.marcar}">${ICON_CHECK}</button>`)}</div>`; }
+function scoreInput(i,pre){ const p=puntos(i);
+  return `<label class="score" title="Tu nota de 1 a 100"><input id="${pre}-${i.id}" type="number" inputmode="numeric" min="1" max="100" placeholder="—" class="${p?"":"empty"}" value="${p??""}" data-score="${i.id}" aria-label="Nota de ${esc(i.titulo)} de 1 a 100"><small>/100</small></label>`; }
+function rowDone(i){ return `<div class="item">${portada(i)}${metaBtn(i)}${delOrActions(i,scoreInput(i,"score")+`<button class="icon" data-undo="${i.id}" aria-label="Volver a pendientes" title="Volver a pendientes">${ICON_UNDO}</button>`)}</div>`; }
+function rowTop(i,n){ const p=puntos(i);
+  return `<div class="item ${n<=3?"podium":""}"><div class="rankcell"><div class="rank">${n}</div>${portada(i)}</div>
+    <div class="meta">${metaBtn(i)}<div class="bar"><i style="width:${p}%"></i></div></div><div class="bigscore">${p}<small>/100</small></div></div>`; }
+
+function renderSheet(){
+  if(!sheet) return "";
+  const cat=CATS[route], t=cat.tipo;
+  let d,it=null;
+  if(sheet.kind==="item"){ it=items.find(x=>x.id===sheet.id); if(!it){ sheet=null; return ""; } d=it; } else d=sheet.data;
+  const k=dkey(d,t), det=(it&&it.detalle)||detCache[k], st=detState[k];
+  const big=d.poster?d.poster.replace("/w185/","/w342/").replace("-M.jpg","-L.jpg"):"";
+  let h=`<div class="scrim" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title" data-tipo="${t}">
+    <div class="sheet-head">${big?`<img class="poster" src="${esc(big)}" alt="">`:`<div></div>`}
+      <div style="min-width:0"><div class="kind">${cat.uno}</div><h2 id="sheet-title">${esc(d.titulo)}</h2><div class="sub">${[d.anio,d.autor||(det&&det.autor)].filter(Boolean).map(esc).join(" · ")}</div></div>
+      <button class="icon" data-close aria-label="Cerrar ficha" style="font-size:24px">×</button></div>`;
+  if(det){
+    const tags=[...(det.extra?[`<span class="tag strong">${esc(det.extra)}</span>`]:[]),...(det.generos||[]).map(g=>`<span class="tag">${esc(g)}</span>`)];
+    if(tags.length) h+=`<div class="tags">${tags.join("")}</div>`;
+    h+= det.sinopsis?`<p class="syn">${esc(det.sinopsis)}</p>`:(d.sinopsis?`<p class="syn">${esc(d.sinopsis)}</p>`:`<p class="note">Sin sinopsis disponible.</p>`);
+    if(det.reparto&&det.reparto.length) h+=`<p class="note">Con ${det.reparto.map(esc).join(", ")}</p>`;
+    if(t!=="libro") h+=`<p class="note">${det.donde?`Dónde verlo en España: <strong style="color:var(--ink)">${esc(det.donde)}</strong>`:"No está en ninguna plataforma de suscripción en España ahora mismo."}</p>`;
+  } else {
+    if(d.sinopsis) h+=`<p class="syn">${esc(d.sinopsis)}</p>`;
+    h+= st==="busy"?`<p class="note">Cargando la ficha…</p>`
+      : st==="key"?`<p class="note">Añade tu clave de TMDB en Ajustes para ver la ficha completa.</p>`
+      : st==="fail"?`<p class="note">No se pudo cargar la ficha. <button class="ghost" data-retry-det>Reintentar</button></p>`
+      : !d.ref?`<p class="note">Añadido a mano: no hay ficha para este título.</p>`:"";
+  }
+  if(!it){
+    const ya=enLista(d.titulo,t);
+    h+=`<div class="sect"><button class="btn" data-sheet-add ${ya?"disabled":""}>${ya?"Ya está en tu lista":"Añadir a pendientes"}</button></div>`;
+  } else {
+    const hecho=it.estado==="hecho";
+    h+=`<div class="sect"><div class="statusrow"><span class="pill ${hecho?"":"soft"}">${hecho?cat.hecho.replace(/s$/,""):"Pendiente"}</span>
+      ${hecho?scoreInput(it,"sscore")+`<button class="ghost" data-undo="${it.id}">Volver a pendientes</button>`:`<button class="ghost" data-done="${it.id}">${cat.marcar}</button>`}</div></div>`;
+    if(t==="libro") h+=`<div class="sect"><h3>Lectura</h3><div class="dates">
+        <label class="field">Empezado<input type="date" id="d-ini-${it.id}" data-date="inicio" data-id="${it.id}" value="${it.inicio||""}"></label>
+        <label class="field">Terminado<input type="date" id="d-fin-${it.id}" data-date="fin" data-id="${it.id}" value="${it.fin||""}"></label>
+      </div><p class="note">Al poner la fecha de fin, el libro pasa a Leídos.</p></div>`;
+    if(t==="serie"){
+      const ts=[...(it.temporadas||[])].sort((a,b)=>a.n-b.n), next=(ts.length?ts[ts.length-1].n:0)+1, max=det&&det.temporadas;
+      h+=`<div class="sect"><h3>Temporadas${max?` · ${max} estrenada${max>1?"s":""}`:""}</h3>`+
+        (ts.length?ts.map(s=>`<div class="season"><span class="sn">T${s.n}</span>
+          <label class="field">Inicio<input type="date" id="s-ini-${it.id}-${s.n}" data-season="${s.n}" data-field="inicio" data-id="${it.id}" value="${s.inicio||""}"></label>
+          <label class="field">Fin<input type="date" id="s-fin-${it.id}-${s.n}" data-season="${s.n}" data-field="fin" data-id="${it.id}" value="${s.fin||""}"></label>
+          <button class="icon" data-season-del="${s.n}" data-id="${it.id}" aria-label="Quitar temporada ${s.n}">${ICON_DEL}</button></div>`).join("")
+          :`<p class="note">Apunta cuándo empiezas y terminas cada temporada.</p>`)+
+        (!max||next<=max?`<div><button class="ghost" data-season-add="${next}" data-id="${it.id}">+ Temporada ${next}</button></div>`:"")+`</div>`;
+    }
+  }
+  return h+`</div>`;
+}
+
+/* ======================= eventos ======================= */
+function bind(){
+  const on=(sel,fn)=>document.querySelectorAll(sel).forEach(el=>el.onclick=()=>fn(el));
+  const f=$("#searchForm"); if(f) f.onsubmit=e=>{e.preventDefault();buscar($("#q").value);};
+  const qi=$("#q"); if(qi) qi.oninput=()=>{search.q=qi.value;};
+  on("[data-tab]",b=>{tab=b.dataset.tab;confirmDel=null;render();});
+  on("[data-try]",b=>buscar(b.dataset.try));
+  on("[data-add]",b=>{addItem(search.results[+b.dataset.add],CATS[route].tipo);tab="pendiente";render();});
+  on("#manualAdd",()=>{addItem({titulo:search.q},CATS[route].tipo);search={q:"",results:null,busy:false,err:""};tab="pendiente";render();});
+  on("#closeRes",()=>{search={q:"",results:null,busy:false,err:""};render();});
+  on("[data-done]",b=>{ const id=b.dataset.done, it=items.find(x=>x.id===id), patch={estado:"hecho",terminado:Date.now()};
+    if(it&&it.tipo==="libro"&&!it.fin) patch.fin=hoy();
+    tab="hecho"; store.update(id,patch);
+    setTimeout(()=>{const el=document.getElementById((sheet?"sscore-":"score-")+id); if(el) el.focus();},50); });
+  on("[data-undo]",b=>store.update(b.dataset.undo,{estado:"pendiente",terminado:null}));
+  document.querySelectorAll("[data-score]").forEach(inp=>{
+    inp.onchange=()=>{ const id=inp.dataset.score, it=items.find(x=>x.id===id); if(!it) return;
+      let v=inp.value.trim()===""?null:Math.round(Number(inp.value));
+      if(v!==null){ if(!isFinite(v)) return; v=Math.min(100,Math.max(1,v)); }
+      if(v!==puntos(it)) store.update(id,{puntos:v}); };
+    inp.onkeydown=e=>{ if(e.key==="Enter") inp.blur(); };
+  });
+  on("[data-del]",b=>{confirmDel=b.dataset.del;render();});
+  on("[data-del-yes]",b=>{const id=b.dataset.delYes;confirmDel=null;store.remove(id);});
+  on("[data-del-no]",()=>{confirmDel=null;render();});
+  on("[data-open-result]",b=>abrir({kind:"result",data:search.results[+b.dataset.openResult]}));
+  on("[data-open-item]",b=>abrir({kind:"item",id:b.dataset.openItem}));
+  on("[data-close]",cerrar);
+  on("[data-retry-det]",()=>{ const d=sheet.kind==="item"?items.find(x=>x.id===sheet.id):sheet.data; if(!d) return;
+    const t=CATS[route].tipo; delete detState[dkey(d,t)]; cargarDetalle(d,t,sheet.kind==="item"?sheet.id:null); });
+  on("[data-sheet-add]",()=>{ const id=addItem(sheet.data,CATS[route].tipo); tab="pendiente"; sheet={kind:"item",id}; render(); });
+  document.querySelectorAll("[data-date]").forEach(inp=>inp.onchange=()=>{
+    const id=inp.dataset.id, it=items.find(x=>x.id===id); if(!it) return;
+    const v=inp.value||null, patch={[inp.dataset.date]:v};
+    if(inp.dataset.date==="fin"&&v&&it.estado!=="hecho"){ patch.estado="hecho"; patch.terminado=Date.now(); }
+    store.update(id,patch); });
+  on("[data-season-add]",b=>{ const n=+b.dataset.seasonAdd; setTemporadas(b.dataset.id,arr=>[...arr,{n,inicio:hoy(),fin:null}]); });
+  on("[data-season-del]",b=>{ const n=+b.dataset.seasonDel; setTemporadas(b.dataset.id,arr=>arr.filter(s=>s.n!==n)); });
+  document.querySelectorAll("[data-season]").forEach(inp=>inp.onchange=()=>{
+    const n=+inp.dataset.season, f=inp.dataset.field;
+    setTemporadas(inp.dataset.id,arr=>arr.map(s=>s.n===n?{...s,[f]:inp.value||null}:s)); });
+  // ajustes
+  const kf=$("#keyForm"); if(kf) kf.onsubmit=async e=>{ e.preventDefault();
+    const v=$("#keyInput").value.trim(), msg=$("#keyMsg");
+    if(!v){ tmdbKey=""; try{localStorage.removeItem(TMDB_KEY);}catch(_){} msg.textContent="Clave borrada."; return; }
+    msg.textContent="Comprobando…"; const prev=tmdbKey; tmdbKey=v;
+    try{ await tmdb("/configuration"); try{localStorage.setItem(TMDB_KEY,v);}catch(_){} msg.textContent="Clave correcta y guardada. Ya puedes buscar."; }
+    catch(err){ tmdbKey=prev; msg.textContent=err.code==="badkey"?"TMDB no acepta esa clave. Revisa que la has copiado entera.":"No se pudo comprobar. Revisa la conexión."; } };
+  on("#exp",exportar);
+  const im=$("#imp"); if(im) im.onchange=()=>{ if(im.files[0]) importar(im.files[0]); };
+}
+
+readRoute();
+</script>
+</body>
+</html>
